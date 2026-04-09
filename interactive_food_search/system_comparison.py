@@ -1,0 +1,103 @@
+from shared_functions import *
+import time
+
+
+def main():
+    """Compare all three search systems with the same query"""
+    print("FOOD SEARCH SYSTEMS COMPARISON")
+    print("=" * 50)
+
+    food_items = load_food_data('./FoodDataSet.json')
+
+    interactive_collection = create_similarity_search_collection("comparison_interactive")
+    advanced_collection = create_similarity_search_collection("comparison_advanced")
+    rag_collection = create_similarity_search_collection("comparison_rag")
+
+    populate_similarity_collection(interactive_collection, food_items)
+    populate_similarity_collection(advanced_collection, food_items)
+    populate_similarity_collection(rag_collection, food_items)
+
+    test_query = "chocolate dessert"
+
+    print(f"\nTesting query: '{test_query}'")
+    print("=" * 50)
+
+    print("\n1. INTERACTIVE SEARCH APPROACH:")
+    print("-" * 30)
+    start_time = time.time()
+    interactive_results = perform_similarity_search(interactive_collection, test_query, 3)
+    interactive_time = time.time() - start_time
+
+    for i, result in enumerate(interactive_results, 1):
+        print(f"{i}. {result['food_name']} ({result['similarity_score']*100:.1f}% match)")
+        print(f"   {result['food_description']}")
+    print(f"Response time: {interactive_time:.3f} seconds")
+
+    print("\n2. ADVANCED SEARCH APPROACH:")
+    print("-" * 30)
+    start_time = time.time()
+
+    basic_results = perform_similarity_search(advanced_collection, test_query, 3)
+    print("Basic results:")
+    for i, result in enumerate(basic_results, 1):
+        print(f"  {i}. {result['food_name']} - {result['cuisine_type']} ({result['food_calories_per_serving']} cal)")
+
+    spicy_results = perform_filtered_similarity_search(
+        advanced_collection, test_query, cuisine_filter="Indian", n_results=2
+    )
+    print("Filtered for Indian cuisine:")
+    for i, result in enumerate(spicy_results, 1):
+        print(f"  {i}. {result['food_name']} ({result['similarity_score']*100:.1f}% match)")
+
+    advanced_time = time.time() - start_time
+    print(f"Response time: {advanced_time:.3f} seconds")
+
+    print("\n3. RAG CHATBOT APPROACH:")
+    print("-" * 30)
+    start_time = time.time()
+
+    rag_results = perform_similarity_search(rag_collection, test_query, 3)
+
+    rag_response = "Perfect! I found some excellent chocolate dessert options for you. "
+    rag_response += (
+        f"I'd highly recommend the {rag_results[0]['food_name']} - "
+        f"it's a {rag_results[0]['similarity_score']*100:.0f}% match "
+        f"and offers that sweet, rich flavor you're craving. "
+    )
+    if rag_results[0]['cuisine_type'] == 'American':
+        rag_response += "American desserts are perfect for chocolate lovers! "
+    rag_response += f"At {rag_results[0]['food_calories_per_serving']} calories, it's a delightful treat. "
+    rag_response += f"You might also enjoy {rag_results[1]['food_name']} as an alternative."
+
+    print(f"Bot: {rag_response}")
+
+    rag_time = time.time() - start_time
+    print(f"Response time: {rag_time:.3f} seconds")
+
+    print("\nSYSTEM COMPARISON SUMMARY:")
+    print("=" * 50)
+    print("Interactive Search:")
+    print("  Fast and simple")
+    print("  Direct results display")
+    print("  Limited context")
+
+    print("\nAdvanced Search:")
+    print("  Powerful filtering options")
+    print("  Multiple search modes")
+    print("  Precise control")
+    print("  Requires user to know filter options")
+
+    print("\nRAG Chatbot:")
+    print("  Natural language interaction")
+    print("  Contextual explanations")
+    print("  Conversational experience")
+    print("  More complex implementation")
+
+    print("\nPerformance Comparison:")
+    print(f"  Interactive: {interactive_time:.3f}s")
+    print(f"  Advanced: {advanced_time:.3f}s")
+    print(f"  RAG Chatbot: {rag_time:.3f}s")
+
+
+if __name__ == "__main__":
+    main()
