@@ -1,5 +1,6 @@
 .claude/
 .ruff_cache/
+notebooks_to_check/
 
 # Python
 __pycache__/
