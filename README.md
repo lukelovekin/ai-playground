@@ -141,6 +141,13 @@ A Flask web app that calls the IBM Watson NLP REST API to perform emotion detect
 
 **Tools:** **Flask**, **IBM Watson NLP API**
 
+### [`docchat`](./docchat)
+A document Q&A app powered by [Docling](https://github.com/DS4SD/docling) and a LangGraph multi-agent pipeline. Upload PDFs, DOCX, TXT, or MD files and ask questions — a three-agent workflow handles relevance checking, answer generation, and verification. Retrieval uses a hybrid BM25 + ChromaDB ensemble with IBM WatsonX SLATE embeddings. The Gradio UI caches processed documents by content hash to skip re-parsing on repeated queries.
+
+**Pattern:** Multi-agent, RAG, Hybrid retrieval
+
+**Tools:** **Gradio**, **LangGraph**, **LangChain**, **IBM WatsonX** (Granite 8B, Llama 3.2 11B Vision, Granite 4H, SLATE embeddings), **Docling**, **ChromaDB**
+
 ### [`notebooks`](./notebooks)
 Standalone reference notebooks:
 - **`langchain_fundamentals`** — covers models, chat messages, prompt templates, output parsers, document loaders, text splitters, embeddings, vector stores, retrievers, memory, chains (LLMChain and LCEL), and agents with the ReAct framework.

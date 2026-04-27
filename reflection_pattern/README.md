@@ -1,83 +1,48 @@
-# SQL Agent with Reflection - Query Improvement
+# reflection_pattern
 
-This activity demonstrates the reflection design pattern for SQL query generation, where one LLM generates queries and another evaluates and improves them iteratively.
+Implements the reflection pattern in two contexts: iterative chart generation with visual feedback, and self-correcting SQL generation.
 
-## Overview
+## Projects
 
-The SQL agent follows a reflection-based workflow:
-1. **Generate**: Create initial SQL query from natural language question
-2. **Execute**: Run the query and capture results
-3. **Evaluate**: Have another LLM assess if results answer the question adequately  
-4. **Refine**: Improve the SQL query based on evaluation feedback
-5. **Final Execute**: Run the refined query for the final result
+### Chart generation (`chart_generation_reflection.ipynb`)
 
-## Prerequisites
+1. GPT-4o-mini generates matplotlib chart code from a natural language description.
+2. The code is executed and the chart is rendered to an image.
+3. A vision model (o4-mini or Claude) inspects the rendered image and critiques it.
+4. The code is revised based on the critique and re-rendered.
+5. Repeat until the chart meets the specification.
 
-Ensure you have a `.env` file in the root of the repository with API keys for:
-- `OPENAI_API_KEY` - OpenAI API access
-- `GOOGLE_API_KEY` - Google AI Studio access
-- `ANTHROPIC_API_KEY` - Anthropic Claude access
-- `TAVILY_API_KEY` - Tavily web search API access
+### SQL generation (`sql_generation_reflection.ipynb`)
 
-Install dependencies from the root directory:
+1. An LLM translates a natural language question into SQL.
+2. The query is executed against a SQLite database (`products.db` — 100 products with brands, categories, colours, pricing).
+3. The result (or error) is fed back to the model for self-correction.
+4. A separate evaluator model assesses whether the result adequately answers the question.
+5. The query is refined if needed.
+
+## Pattern
+
+Reflection, Self-correction
+
+## Tools
+
+**AISuite**, **OpenAI** (GPT-4o, GPT-4o-mini, o4-mini), **Anthropic** (Claude), **matplotlib**, **SQLite**
+
+## Setup
+
 ```bash
-pip install -r requirements.txt
+python -m venv venv
+source venv/bin/activate
+pip install aisuite openai anthropic matplotlib python-dotenv
 ```
 
-## Files
+Create a `.env` file:
 
-- `sql.ipynb` - Main notebook demonstrating SQL reflection workflow
-- `utils.py` - Utility functions for database operations
-- `products.db` - SQLite database (auto-generated when running notebook)
+```env
+OPENAI_API_KEY=your_key_here
+ANTHROPIC_API_KEY=your_key_here
+```
 
-## Running the Activity
+## Run
 
-1. **Open and run the notebook**:
-   - Open `sql.ipynb` in Jupyter
-   - Run all cells sequentially
-
-2. **The notebook will**:
-   - Create a sample products database with 100 items
-   - Show database schema and sample data
-   - Execute the reflection workflow with example queries
-   - Display the improvement process step-by-step
-
-3. **Example workflow**:
-   ```python
-   results = run_sql_workflow("products.db", 
-                              "Which color of product has the highest total sales?",
-                              model_generation="openai:gpt-4o-mini",
-                              model_evaluation="openai:gpt-4o")
-   ```
-
-## Database Schema
-
-Auto-generated `products.db` contains:
-- **Table**: products
-- **Columns**: id, name, brand, category, color, price, stock, total_sales
-- **Data**: 100 random products with brands (Nike, Adidas, Puma, etc.), categories (shoes, hoodie, t-shirt, etc.), and colors
-
-## Key Learning Points
-
-- **Reflection Pattern**: How one LLM can evaluate and improve another's SQL generation
-- **Error Recovery**: Fixing syntax errors and logical issues through reflection
-- **Query Optimization**: Improving query structure based on evaluation feedback
-- **Multi-Model Cooperation**: Using different models for generation vs evaluation
-- **Iterative Improvement**: Systematic refinement of database queries
-
-## Expected Outputs
-
-The workflow shows progression through reflection:
-
-1. **Initial Query**: May contain formatting issues or logical errors
-2. **Evaluation Feedback**: LLM assessment of query quality and result adequacy
-3. **Refined Query**: Improved version based on feedback
-4. **Comparison**: Side-by-side view of original vs improved results
-
-## Example Improvements
-
-Common issues fixed by reflection:
-- Removing SQL markdown formatting (````sql`)
-- Fixing column name errors
-- Improving query logic and structure
-- Ensuring proper aggregation functions
+Open either notebook in Jupyter and run all cells. `products.db` is auto-generated on first run.

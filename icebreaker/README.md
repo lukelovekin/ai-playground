@@ -1,123 +1,53 @@
-# LinkedIn Icebreaker Bot
+# icebreaker
 
-An AI-powered assistant that generates personalized icebreakers and conversation starters based on LinkedIn profiles. Built with IBM watsonx.ai and LlamaIndex, it helps make professional introductions more personal and engaging.
+An AI-powered assistant that generates personalised icebreakers and conversation starters from LinkedIn profiles. Scrapes profile data via ProxyCurl, builds a RAG index with IBM WatsonX embeddings, and answers questions about the person using LlamaIndex.
 
-## Features
+## How it works
 
-- **LinkedIn Profile Analysis**: Extract professional data using ProxyCurl API or use mock data
-- **AI-Powered Insights**: Generate interesting facts about a person's career/education 
-- **Personalized Q&A**: Answer specific questions about the person's background
-- **Two Interfaces**: Command-line tool for quick usage and web UI for user-friendly interaction
-- **Flexible**: Use mock data for practice or connect to real LinkedIn profiles
+1. LinkedIn profile data is retrieved via ProxyCurl API (or mock data if no key is provided).
+2. The profile text is split into chunks and embedded using IBM WatsonX embeddings.
+3. Embeddings are stored in a vector index via LlamaIndex.
+4. On query, relevant profile sections are retrieved and passed to an IBM WatsonX LLM for generation.
 
-## Quick Start
+The default output is three interesting facts about the person as a conversation starter. Follow-up questions are answered via RAG over the indexed profile.
 
-### Prerequisites
+## Pattern
 
-- Python 3.11+, < 3.13
-- A ProxyCurl API key (optional - mock data available)
+RAG
 
-### Installation
+## Tools
 
-1. Clone the repository:
-```bash
-git clone https://github.com/HaileyTQuach/icebreaker.git
-cd icebreaker
-```
+**LlamaIndex**, **IBM WatsonX** (WatsonxLLM, WatsonxEmbeddings), **ProxyCurl API**
 
-2. Create a virtual environment:
+## Setup
+
 ```bash
 python -m venv venv
-source venv/bin/activate # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. (Optional) Add your ProxyCurl API key to `config.py`:
-```python
-PROXYCURL_API_KEY = ""
-```
+Optionally add a ProxyCurl API key to `config.py` for live profile lookups. Without it, mock data is used.
 
-### Using the Command Line Interface
-
-Run the bot using the terminal:
+## Run
 
 ```bash
-# Use mock data (no API key needed)
+# CLI
 python main.py --mock
+python main.py --url "https://www.linkedin.com/in/username/" --api-key "your_key"
 
-# OR use a real LinkedIn profile
-python main.py --url "https://www.linkedin.com/in/username/" --api-key "your-api-key"
-```
-
-### Using the Web Interface
-
-Launch the web app:
-
-```bash
+# Gradio web interface
 python app.py
 ```
 
-Then open your browser to the URL shown in the terminal (typically http://127.0.0.1:7860).
+The web interface starts at `http://127.0.0.1:7860`.
 
-## How It Works
-
-The Icebreaker Bot uses a Retrieval-Augmented Generation (RAG) pipeline:
-
-1. **Data Extraction**: LinkedIn profile data is retrieved via ProxyCurl API or mock data
-2. **Text Processing**: Profile data is split into manageable chunks
-3. **Vector Embedding**: Text chunks are converted to vector embeddings using IBM watsonx
-4. **Storage**: Embeddings are stored in a vector database
-5. **Query & Generation**: When asked a question, relevant profile sections are retrieved and an IBM watsonx LLM generates contextually accurate responses
-
-## Project Structure
+## Project structure
 
 ```
-icebreaker_bot/
-├── requirements.txt # Dependencies
-├── config.py # Configuration settings
-├── modules/
-│ ├── __init__.py
-│ ├── data_extraction.py # LinkedIn profile data extraction
-│ ├── data_processing.py # Data splitting and indexing
-│ ├── llm_interface.py # LLM setup and interaction
-│ └── query_engine.py # Query processing and response generation
-├── app.py # Gradio web interface
-└── main.py # CLI application
-```
-
-## Examples
-
-Here are some example questions you can ask:
-
-- "What is this person's current job title?"
-- "Where did they get their education?"
-- "What skills do they have related to machine learning?"
-- "How long have they been working at their current company?"
-- "What was their career progression?"
-
-## Customization
-
-### Using Different LLM Models
-
-You can switch between available models:
-
-```bash
-python main.py --mock --model "meta-llama/llama-3-3-70b-instruct"
-```
-
-Or in the web interface, select from the dropdown menu.
-
-### Adjusting Response Style
-
-Edit the prompt templates in `config.py` to change how responses are generated:
-
-```python
-INITIAL_FACTS_TEMPLATE = """
-You are an AI assistant that provides detailed answers based on the provided context.
-...
-"""
+icebreaker/
+├── app.py                  # Gradio interface
+├── main.py                 # CLI entry point
+├── config.py               # API keys and prompt templates
+└── requirements.txt
 ```
