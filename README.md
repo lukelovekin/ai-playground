@@ -171,3 +171,11 @@ Standalone reference notebooks:
 - **`langgraph_101`** — introduction to LangGraph's core primitives: typed state dictionaries, nodes, edges, routers, and conditional branching. Covers two worked examples — a user authentication workflow with success/failure routing, and a QA workflow that validates input, retrieves context, and calls an IBM Watsonx LLM to generate an answer.
 
 **Tools:** **pandas**, **NumPy**, **matplotlib**, **LangGraph**, **LangChain**, **IBM Watsonx**
+
+### [`mcp`](./mcp)
+A consolidated MCP project covering four patterns: a modular **FastMCP stdio server** with a Claude-backed CLI client (elicitation, chunked write progress, server notifications, agentic loop); a **FastMCP HTTP server** over Streamable HTTP with a tabbed Gradio GUI client and a GPT-4o-mini AI host app; a **permission-aware stdio server** with risk-annotated tools, audit logging, and a client-side allow/ask/deny permission system with a pending-approval chat flow; and a **multi-server LangGraph ReAct agent** connecting simultaneously to Context7 and Met Museum via `MultiServerMCPClient`.
+
+**Pattern:** MCP server/client, stdio + HTTP transport, Permission enforcement, Agentic tool use, Elicitation, Sampling, Multi-server
+
+**Tools:** **FastMCP**, **MCP SDK**, **Anthropic** (Claude Sonnet), **OpenAI** (GPT-4o-mini), **LangGraph**, **LangChain MCP Adapters**, **Gradio**, **Pydantic**
+

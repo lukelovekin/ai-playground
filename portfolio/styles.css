@@ -1,0 +1,172 @@
+/* ── Page background ──────────────────────────────── */
+body, .gradio-container {
+    background: #0f1117 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    max-width: 860px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+}
+
+/* ── Header ───────────────────────────────────────── */
+#header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: #1a1d27;
+    border-bottom: 1px solid #2a2d3a;
+}
+
+#header img {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid #4f6ef7 !important;
+    flex-shrink: 0 !important;
+}
+
+#header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #e8eaf0;
+    margin: 0;
+}
+
+#header p {
+    font-size: 0.82rem;
+    color: #8b8fa8;
+    margin: 3px 0 0;
+}
+
+/* ── Chat area ────────────────────────────────────── */
+#chatbot {
+    background: #0f1117 !important;
+    border: none !important;
+    scroll-behavior: smooth !important;
+}
+
+#chatbot > div,
+#chatbot .wrap,
+#chatbot .bubble-wrap {
+    scroll-behavior: smooth !important;
+}
+
+.message.user {
+    background: #1e2235 !important;
+    color: #e8eaf0 !important;
+    border-radius: 12px 12px 4px 12px !important;
+    max-width: 85% !important;
+}
+
+.message.bot {
+    background: #1a1d27 !important;
+    color: #e8eaf0 !important;
+    border-radius: 12px 12px 12px 4px !important;
+    border: 1px solid #2a2d3a !important;
+    max-width: 85% !important;
+}
+
+/* ── Input row ────────────────────────────────────── */
+#input-row {
+    background: #1a1d27;
+    border-top: 1px solid #2a2d3a;
+    padding: 12px 16px;
+}
+
+#msg-box textarea {
+    background: #0f1117 !important;
+    border: 1px solid #2a2d3a !important;
+    color: #e8eaf0 !important;
+    border-radius: 10px !important;
+    font-size: 0.95rem !important;
+}
+
+#msg-box textarea:focus {
+    border-color: #4f6ef7 !important;
+    outline: none !important;
+}
+
+#send-btn {
+    background: #4f6ef7 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: white !important;
+    font-weight: 500 !important;
+    min-width: 64px !important;
+}
+
+#send-btn:hover {
+    background: #3d5ce5 !important;
+}
+
+/* ── Suggested questions ──────────────────────────── */
+.suggestions-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 10px 16px !important;
+    background: #0f1117 !important;
+}
+
+.suggestion-btn {
+    background: #1a1d27 !important;
+    border: 1px solid #2a2d3a !important;
+    color: #8b8fa8 !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    white-space: normal !important;
+    text-align: left !important;
+    transition: all 0.15s !important;
+    flex: 1 1 auto !important;
+    min-width: 120px !important;
+}
+
+.suggestion-btn:hover {
+    border-color: #4f6ef7 !important;
+    color: #e8eaf0 !important;
+}
+
+/* ── Footer ───────────────────────────────────────── */
+#footer {
+    text-align: center;
+    font-size: 0.72rem;
+    color: #4a4d62;
+    padding: 10px;
+}
+
+footer { display: none !important; }
+
+/* ── Mobile ───────────────────────────────────────── */
+@media (max-width: 600px) {
+    #header {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    #header img {
+        width: 60px !important;
+        height: 60px !important;
+    }
+
+    #header h1 {
+        font-size: 1rem;
+    }
+
+    #header p {
+        font-size: 0.75rem;
+    }
+
+    .message.user, .message.bot {
+        max-width: 95% !important;
+    }
+
+    #input-row {
+        padding: 10px 12px;
+    }
+
+    .suggestion-btn {
+        font-size: 0.75rem !important;
+        min-width: 100px !important;
+    }
+}

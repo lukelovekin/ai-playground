@@ -1,0 +1,263 @@
+import sys
+import json
+import gradio as gr
+from openai import OpenAI
+from http_client import MCPHTTPClient
+
+
+class MCPHTTPHostApp(MCPHTTPClient):
+    """AI host app connecting GPT-4o-mini to MCP HTTP server tools."""
+
+    def __init__(self, server_url: str, roots_dir: str):
+        super().__init__(server_url, roots_dir)
+        self.conversation_history = []
+        self.llm_client = OpenAI()
+        self.model = "gpt-4o-mini"
+
+    async def get_available_tools(self) -> list[dict]:
+        """Return MCP tools + synthetic resource/prompt helpers in OpenAI function format."""
+        await self.connect()
+
+        mcp_tools = await self.list_tools()
+        openai_tools = []
+
+        for tool in mcp_tools:
+            tool_schema = {
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description or f"Execute {tool.name}",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            }
+            if hasattr(tool, 'inputSchema') and tool.inputSchema:
+                schema = tool.inputSchema
+                if isinstance(schema, dict):
+                    if "properties" in schema:
+                        tool_schema["function"]["parameters"]["properties"] = schema["properties"]
+                    if "required" in schema and schema["required"]:
+                        tool_schema["function"]["parameters"]["required"] = schema["required"]
+            openai_tools.append(tool_schema)
+
+        openai_tools += [
+            {
+                "type": "function",
+                "function": {
+                    "name": "mcp_list_resources",
+                    "description": "List all available resources from the MCP server",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "mcp_read_resource",
+                    "description": "Read a specific resource by URI from the MCP server",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "uri": {"type": "string", "description": "Resource URI, e.g. 'file://workspace/example.txt'"}
+                        },
+                        "required": ["uri"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "mcp_list_prompts",
+                    "description": "List all available prompt templates from the MCP server",
+                    "parameters": {"type": "object", "properties": {}}
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "mcp_get_prompt",
+                    "description": "Get a rendered prompt template from the MCP server",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string", "description": "Prompt template name"},
+                            "arguments": {"type": "object", "description": "Arguments for the prompt template"}
+                        },
+                        "required": ["name"]
+                    }
+                }
+            },
+        ]
+
+        return openai_tools
+
+    async def execute_tool(self, tool_name: str, arguments: dict) -> str:
+        await self.connect()
+
+        if tool_name == "mcp_list_resources":
+            resources = await self.list_resources()
+            result = "Available resources:\n"
+            for r in resources:
+                result += f"- {r.uriTemplate}"
+                if r.name:
+                    result += f" ({r.name})"
+                if r.description:
+                    result += f": {r.description}"
+                result += "\n"
+            return result
+
+        if tool_name == "mcp_read_resource":
+            uri = arguments.get("uri")
+            if not uri:
+                return "Error: URI is required"
+            try:
+                contents = await self.read_resource(uri)
+                if isinstance(contents, list) and len(contents) > 0:
+                    content = contents[0]
+                    return content.text if hasattr(content, 'text') else str(content)
+                return str(contents)
+            except Exception as e:
+                return f"Error reading resource: {str(e)}"
+
+        if tool_name == "mcp_list_prompts":
+            prompts = await self.list_prompts()
+            result = "Available prompts:\n"
+            for p in prompts:
+                result += f"- {p.name}"
+                if p.description:
+                    result += f": {p.description}"
+                if hasattr(p, 'arguments') and p.arguments:
+                    result += f" (args: {', '.join(arg.name for arg in p.arguments)})"
+                result += "\n"
+            return result
+
+        if tool_name == "mcp_get_prompt":
+            name = arguments.get("name")
+            if not name:
+                return "Error: Prompt name is required"
+            try:
+                messages = await self.get_prompt(name, arguments.get("arguments", {}))
+                result = f"Prompt: {name}\n\n"
+                for msg in messages:
+                    role = getattr(msg, 'role', 'unknown')
+                    content = getattr(msg, 'content', '')
+                    if hasattr(content, 'text'):
+                        content = content.text
+                    result += f"[{role}]: {content}\n\n"
+                return result
+            except Exception as e:
+                return f"Error getting prompt: {str(e)}"
+
+        try:
+            result = await self.call_tool(tool_name, arguments)
+            if isinstance(result, list) and len(result) > 0:
+                content = result[0]
+                return content.text if hasattr(content, 'text') else str(content)
+            if hasattr(result, 'text'):
+                return result.text
+            return str(result)
+        except Exception as e:
+            return f"Error executing tool: {str(e)}"
+
+    async def chat(self, user_message: str, history: list) -> str:
+        await self.connect()
+
+        self.conversation_history.append({"role": "user", "content": user_message})
+        tools = await self.get_available_tools()
+
+        kwargs = {"model": self.model, "messages": self.conversation_history}
+        if tools:
+            kwargs["tools"] = tools
+            kwargs["tool_choice"] = "auto"
+
+        response = self.llm_client.chat.completions.create(**kwargs)
+        if not response or not response.choices:
+            return "Error: No response from LLM"
+
+        assistant_message = response.choices[0].message
+
+        if assistant_message.tool_calls:
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": assistant_message.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.function.name, "arguments": tc.function.arguments}
+                    }
+                    for tc in assistant_message.tool_calls
+                ]
+            })
+
+            for tool_call in assistant_message.tool_calls:
+                tool_result = await self.execute_tool(
+                    tool_call.function.name,
+                    json.loads(tool_call.function.arguments)
+                )
+                self.conversation_history.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": str(tool_result)
+                })
+
+            final_response = self.llm_client.chat.completions.create(
+                model=self.model,
+                messages=self.conversation_history
+            )
+            if not final_response or not final_response.choices:
+                return "Error: No response from LLM after tool execution"
+
+            final_message = final_response.choices[0].message.content
+            self.conversation_history.append({"role": "assistant", "content": final_message})
+            return final_message
+
+        self.conversation_history.append({"role": "assistant", "content": assistant_message.content})
+        return assistant_message.content
+
+    def create_interface(self):
+        async def chat_wrapper(message, history):
+            if not message.strip():
+                return history
+            response = await self.chat(message, history)
+            return history + [
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": response}
+            ]
+
+        async def reset_conversation():
+            self.conversation_history = []
+            return []
+
+        with gr.Blocks(title="MCP HTTP AI Host") as interface:
+            gr.Markdown(f"# MCP HTTP AI Host\n**Server:** {self.server_url} | **Model:** {self.model}")
+
+            chatbot = gr.Chatbot(label="Conversation", height=500, type="messages")
+
+            with gr.Row():
+                msg = gr.Textbox(
+                    label="Your message",
+                    placeholder="Ask me to use MCP tools...",
+                    scale=4
+                )
+                clear = gr.Button("Clear", scale=1)
+
+            msg.submit(fn=chat_wrapper, inputs=[msg, chatbot], outputs=chatbot).then(
+                lambda: "", outputs=msg
+            )
+            clear.click(fn=reset_conversation, outputs=chatbot)
+
+        return interface
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: python3 http_host_app.py <server_url> <roots_dir>")
+        print("Example: python3 http_host_app.py http://127.0.0.1:8000 ./workspace")
+        sys.exit(1)
+
+    client = MCPHTTPHostApp(sys.argv[1], sys.argv[2])
+    interface = client.create_interface()
+    interface.queue().launch(server_name="127.0.0.1", server_port=7862)
+
+
+if __name__ == "__main__":
+    main()

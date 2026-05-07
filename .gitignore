@@ -1,6 +1,6 @@
 .claude/
 .ruff_cache/
-notebooks_to_check/
+to_refactor/
 
 # Python
 __pycache__/

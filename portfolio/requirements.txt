@@ -1,0 +1,6 @@
+groq
+gradio>=6.0.0
+chromadb
+sentence-transformers
+python-dotenv
+pdfminer.six
